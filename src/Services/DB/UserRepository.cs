@@ -139,7 +139,6 @@ namespace APILogger.Services.DB
 
         private static byte[] Hash(string line)
         {
-
             var pbkdf2 = new Rfc2898DeriveBytes(Encoding.UTF8.GetBytes(line), salt, 17813);
             return pbkdf2.GetBytes(20);
         }
