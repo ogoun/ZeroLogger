@@ -82,8 +82,8 @@
         });
     };
 
-    static Auth(source, login, password, success) {
-        const info = { "username": login, "password": password, "source": source };
+    static Auth(login, password, success) {
+        const info = { "username": login, "password": password };
         $.ajax({
             headers: {
                 'Accept': 'application/json',

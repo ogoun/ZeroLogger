@@ -54,16 +54,16 @@ namespace APILogger.Services
             BuiltInAdmin = appSettings.BuiltinAdmin;
             BuiltInPassword = appSettings.BuiltinPassword;
         }
-        public static string Auth(string username, string password, string source)
+        public static string Auth(string username, string password)
         {
             if (username == BuiltInAdmin && password == BuiltInPassword)
             {
-                return Middlewares.Cryptor.Value.WriteToToken(new AuthData { ApplicationName = source, TestKey = Middlewares.TEST_KEY, IsAdmin = true, UserId = -1 });
+                return Middlewares.Cryptor.Value.WriteToToken(new AuthData { Username = "superadmin", TestKey = Middlewares.TEST_KEY, IsAdmin = true, UserId = -1 });
             }
             var user = VerifyUser(username, password);
             if (user != null)
             {
-                return Middlewares.Cryptor.Value.WriteToToken(new AuthData { ApplicationName = source, TestKey = Middlewares.TEST_KEY, IsAdmin = false, UserId = user.Id });
+                return Middlewares.Cryptor.Value.WriteToToken(new AuthData { Username = user.UserName, TestKey = Middlewares.TEST_KEY, IsAdmin = false, UserId = user.Id });
             }
             return string.Empty;
         }

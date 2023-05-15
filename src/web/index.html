@@ -99,12 +99,6 @@
         <div id="popup">
             <div class="dx-fieldset">
                 <div class="dx-field">
-                    <div class="dx-field-label">Source</div>
-                    <div class="dx-field-value">
-                        <div id="tbSource"></div>
-                    </div>
-                </div>
-                <div class="dx-field">
                     <div class="dx-field-label">Login</div>
                     <div class="dx-field-value">
                         <div id="tbLogin"></div>
@@ -136,7 +130,6 @@
         var tagBox;
         var seconds;
         var popup = null;
-        var source;
         var login;
         var password;
 
@@ -203,21 +196,15 @@
         function RefreshToken(success) {
             if (!popup) {
                 popup = $("#popup").dxPopup({
-                    title: "Popup Title",
+                    title: "Login",
                     visible: true,
                     showTitle: true,
-                    title: 'Login',
                     width: 480,
                     dragEnabled: false,
                     hideOnOutsideClick: true,
-                    showCloseButton: false,
-                    height: 300
+                    showCloseButton: true,
+                    height: 260
                 }).dxPopup("instance");
-
-                source = $('#tbSource').dxTextBox({
-                    showClearButton: true,
-                    value: ''
-                }).dxTextBox("instance");
 
                 login = $('#tbLogin').dxTextBox({
                     showClearButton: true,
@@ -237,10 +224,9 @@
                     text: "Login",
                     width: 340,
                     onClick() {
-                        let sourceValue = source.option("value");
                         let loginValue = login.option("value");
                         let passwordValue = password.option("value");
-                        loggerApi.Auth(sourceValue, loginValue, passwordValue, t => {
+                        loggerApi.Auth(loginValue, passwordValue, t => {
                             token = t;
                             popup.hide();
                             popup.dispose();

@@ -13,7 +13,7 @@ namespace APILogger.Controllers
         {
             try
             {
-                var token = AuthProvider.Auth(request.Username, request.Password, request.Source);
+                var token = AuthProvider.Auth(request.Username, request.Password);
                 return Ok(token);
             }
             catch (Exception ex)
