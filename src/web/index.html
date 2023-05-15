@@ -1,0 +1,322 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Logger</title>
+    <script src="js/jquery.js"></script>
+    <script src="js/dx.all.js"></script>
+    <script src="js/logger.js"></script>
+    <link href="css/dx.carmine.css" rel="stylesheet">
+    <style>
+        .widget-container {
+            margin-right: 400px;
+        }
+
+        .options {
+            padding: 20px;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 340px;
+            top: 0;
+            background-color: rgba(191, 191, 191, 0.15);
+        }
+
+            .options > .caption {
+                font-weight: 500;
+                font-size: 18px;
+            }
+
+        .option {
+            margin-top: 10px;
+        }
+
+            .option > .caption {
+                margin-top: 10px;
+                display: inline-block;
+            }
+
+            .option > .dx-tagbox {
+                margin-top: 2px;
+            }
+    </style>
+</head>
+<body class="dx-viewport">
+    <div class="widget-container">
+        <div id="gridContainer"></div>
+    </div>
+    <div class="options">
+        <div>
+            <div id="refresh"></div>
+        </div>
+        <div class="dx-fieldset">
+            <div class="dx-field">
+                <div class="dx-field-label">Source</div>
+                <div class="dx-field-value">
+                    <div id="sourceList"></div>
+                </div>
+            </div>
+
+            <div class="dx-field">
+                <div class="dx-field-label">LogLevel</div>
+                <div class="dx-field-value">
+                    <div id="logLevelList"></div>
+                </div>
+            </div>
+
+            <div class="dx-field">
+                <div class="dx-field-label">Text</div>
+                <div class="dx-field-value">
+                    <div id="text"></div>
+                </div>
+            </div>
+
+            <div class="dx-field">
+                <div class="dx-field-label">Tag</div>
+                <div class="dx-field-value">
+                    <div id="tag"></div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div id="search"></div>
+        </div>
+
+        <div class="dx-fieldset">
+            <div class="dx-field">
+                <div class="dx-field-label">Seconds</div>
+                <div class="dx-field-value">
+                    <div id="seconds"></div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div id="showLast"></div>
+        </div>
+
+
+        <div id="popup">
+            <div class="dx-fieldset">
+                <div class="dx-field">
+                    <div class="dx-field-label">Source</div>
+                    <div class="dx-field-value">
+                        <div id="tbSource"></div>
+                    </div>
+                </div>
+                <div class="dx-field">
+                    <div class="dx-field-label">Login</div>
+                    <div class="dx-field-value">
+                        <div id="tbLogin"></div>
+                    </div>
+                </div>
+                <div class="dx-field">
+                    <div class="dx-field-label">Password</div>
+                    <div class="dx-field-value">
+                        <div id="tbPassword"></div>
+                    </div>
+                </div>
+                <div class="dx-field">
+                    <div class="dx-field-label"></div>
+                    <div class="dx-field-value">
+                        <div id="bLogin"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var sourceList = [];
+        var logLevelsList = [];
+        var token = '';
+        var sourceListBox;
+        var logLevelListBox;
+        var textBox;
+        var tagBox;
+        var seconds;
+        var popup = null;
+        var source;
+        var login;
+        var password;
+
+        function RefreshData() {
+            loggerApi.LoadSources(token, items => {
+                sourceList = items;
+                sourceListBox = $('#sourceList').dxSelectBox({
+                    dataSource: new DevExpress.data.ArrayStore({ data: sourceList }),
+                    value: sourceList[0],
+                }).dxSelectBox("instance");
+                DevExpress.ui.notify('Sources list updated');
+            });
+            loggerApi.LoadLogLevels(token, items => {
+                logLevelsList = items;
+                logLevelListBox = $('#logLevelList').dxSelectBox({
+                    dataSource: new DevExpress.data.ArrayStore({ data: logLevelsList }),
+                    value: logLevelsList[0],
+                }).dxSelectBox("instance");
+                DevExpress.ui.notify('LogLevels list updated');
+            });
+        }
+
+        function Search() {
+            var tagValue = tagBox.option("value");
+            var textValue = textBox.option("value");
+            var logLevelValue = logLevelListBox.option("value");
+            var sourceValue = sourceListBox.option("value");
+
+            if (logLevelValue == 'any') {
+                logLevelValue = null;
+            }
+            if (sourceValue == 'any') {
+                sourceValue = null;
+            }
+
+            loggerApi.Search(token, tagValue, textValue, logLevelValue, sourceValue, records => {
+                $('#gridContainer').dxDataGrid({
+                    dataSource: records,
+                    keyExpr: 'id',
+                    columns: ['source', 'logLevel', 'text', 'tag', 'timestamp'],
+                    showBorders: true,
+                    showColumnLines: true,
+                    showRowLines: true,
+                    rowAlternationEnabled: true
+                });
+            });
+        }
+
+        function ShowLastRecords() {
+            var secondsValue = seconds.option("value");
+            loggerApi.GetLastRecords(token, secondsValue, records => {
+                $('#gridContainer').dxDataGrid({
+                    dataSource: records,
+                    keyExpr: 'id',
+                    columns: ['source', 'logLevel', 'text', 'tag', 'timestamp'],
+                    showBorders: true,
+                    showColumnLines: true,
+                    showRowLines: true,
+                    rowAlternationEnabled: true
+                });
+            });
+        }
+
+        function RefreshToken(success) {
+            if (!popup) {
+                popup = $("#popup").dxPopup({
+                    title: "Popup Title",
+                    visible: true,
+                    showTitle: true,
+                    title: 'Login',
+                    width: 480,
+                    dragEnabled: false,
+                    hideOnOutsideClick: true,
+                    showCloseButton: false,
+                    height: 300
+                }).dxPopup("instance");
+
+                source = $('#tbSource').dxTextBox({
+                    showClearButton: true,
+                    value: ''
+                }).dxTextBox("instance");
+
+                login = $('#tbLogin').dxTextBox({
+                    showClearButton: true,
+                    value: ''
+                }).dxTextBox("instance");
+
+                password = $('#tbPassword').dxTextBox({
+                    mode: 'password',
+                    placeholder: 'Enter password',
+                    showClearButton: true,
+                    value: ''
+                }).dxTextBox("instance");
+
+                $("#bLogin").dxButton({
+                    type: 'success',
+                    icon: "user",
+                    text: "Login",
+                    width: 340,
+                    onClick() {
+                        let sourceValue = source.option("value");
+                        let loginValue = login.option("value");
+                        let passwordValue = password.option("value");
+                        loggerApi.Auth(sourceValue, loginValue, passwordValue, t => {
+                            token = t;
+                            popup.hide();
+                            popup.dispose();
+                            success();
+                        });
+                    }
+                });
+            }
+        }
+
+        $(() => {
+            RefreshData();
+            $("#popup").dxPopup({
+                visible: false
+            });
+
+            $('#refresh').dxButton({
+                stylingMode: 'contained',
+                text: 'Refresh',
+                type: 'success',
+                width: 340,
+                onClick() {
+                    if (!token) {
+                        RefreshToken(RefreshData);
+                    }
+                    else if (token) {
+                        RefreshData();
+                    }
+                }
+            });
+
+            tagBox = $('#tag').dxTextBox({
+                value: '',
+                showClearButton: true,
+            }).dxTextBox("instance");
+
+            textBox = $('#text').dxTextBox({
+                value: '',
+                showClearButton: true,
+            }).dxTextBox("instance");
+
+            seconds = $('#seconds').dxTextBox({
+                value: 3600
+            }).dxTextBox("instance");
+
+            $("#search").dxButton({
+                type: 'success',
+                icon: "find",
+                text: "Search",
+                width: 340,
+                onClick() {
+                    if (!token) {
+                        RefreshToken(Search);
+                    }
+                    else if (token) {
+                        Search();
+                    }
+                }
+            });
+
+            $("#showLast").dxButton({
+                type: 'success',
+                icon: "find",
+                text: "Show last records",
+                width: 390,
+                onClick() {
+                    if (!token) {
+                        RefreshToken(ShowLastRecords);
+                    }
+                    else if (token) {
+                        ShowLastRecords();
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
