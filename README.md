@@ -132,3 +132,27 @@ curl --location 'http://<host>:57717/api/sources' --header 'X-Token: my_access_t
 ```bash
 curl --location 'http://<host>:57717/api/loglevels' --header 'X-Token: my_access_token'
 ```
+
+
+## .NET API call example
+```csharp
+private static void SendLog(string log)
+{
+    var token = "this_is_my_token";
+    using (var client = new HttpClient())
+    {
+        client.DefaultRequestHeaders.Add("X-Token", token);
+        var record = new
+        {
+            source = "MyApp1",
+            tag = Environment.UserName,
+            text = log,
+            logLevel = "critical"
+        };
+        using (var content = new StringContent(JsonConvert.SerializeObject(record), System.Text.Encoding.UTF8, "application/json"))
+        {
+            client.PostAsync("http://<host>:57717/api/log", content).Wait();
+        }
+    }
+}
+```
