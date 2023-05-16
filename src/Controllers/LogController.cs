@@ -1,4 +1,3 @@
-using APILogger.Models;
 using APILogger.Models.DB;
 using APILogger.Models.Requests;
 using APILogger.Services;
@@ -22,17 +21,22 @@ namespace APILogger.Controllers
         public IActionResult Save([FromBody] LogRecordRequest request)
         {
             var id = (long)HttpContext.Items["UserId"]!;
-            _logger.Write(new LogRecord
+            var user = AuthProvider.GetUserThoughCachee(id);
+            if (user != null && user.Sources.Contains(request.Source))
             {
-                LogLevel = request.LogLevel,
-                Tag = request.Tag,
-                Text = request.Text,
-                Source = request.Source,
-                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                RemoteAddress = HttpContext.Items["remoteAddress"]?.ToString() ?? string.Empty,
-                UserId = id
-            });
-            return Ok();
+                _logger.Write(new LogRecord
+                {
+                    LogLevel = request.LogLevel,
+                    Tag = request.Tag,
+                    Text = request.Text,
+                    Source = request.Source,
+                    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    RemoteAddress = HttpContext.Items["remoteAddress"]?.ToString() ?? string.Empty,
+                    UserId = id
+                });
+                return Ok();
+            }
+            return Unauthorized();
         }
 
         [HttpGet("/api/log/{id}")]

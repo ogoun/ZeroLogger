@@ -78,7 +78,7 @@ namespace APILogger.Services.DB
             {
                 var user = Single(r => r.UserName == username);
                 var hash = Hash(password);
-                if (ArrayExtensions.UnsafeEquals(hash, user.PwdHach))
+                if (ArrayExtensions.UnsafeEquals(hash, user?.PwdHach))
                 {
                     return new User
                     {

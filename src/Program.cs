@@ -21,6 +21,7 @@ namespace APILogger
             });
             var config = AppSettings.Create();
             AuthProvider.Init(config, new UserRepository("users"));
+
             builder.Services.AddSingleton<LogRepository>(new LogRepository("logdb"));
             builder.Services.AddControllers();
             var app = builder.Build();
